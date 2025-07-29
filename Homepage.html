@@ -21,12 +21,6 @@
       left: 0;
       z-index: 1000;
       box-shadow: 0px 2px 8px rgba(0,0,0,0.25);
-      animation: slideDown 1s ease;
-    }
-
-    @keyframes slideDown {
-      from { transform: translateY(-100%); }
-      to { transform: translateY(0); }
     }
 
     footer {
@@ -40,7 +34,6 @@
       font-size: 0.9rem;
     }
 
-    /* About Page */
     .about-page {
       height: 100vh;
       background: url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?fit=crop&w=1200&q=80') no-repeat center center/cover;
@@ -51,7 +44,6 @@
       text-align: center;
       color: white;
       padding: 2rem;
-      animation: fadeIn 2s ease;
       position: relative;
     }
     .about-page::before {
@@ -65,14 +57,12 @@
       font-size: 3rem;
       margin-bottom: 1rem;
       text-shadow: 1px 1px 8px rgba(0,0,0,0.9);
-      animation: bounceIn 1.5s ease;
     }
     .about-page p {
       font-size: 1.3rem;
       max-width: 85%;
       margin-bottom: 2rem;
       line-height: 1.5;
-      animation: fadeIn 3s ease;
     }
     .start-btn {
       padding: 1rem 2.5rem;
@@ -85,7 +75,6 @@
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 5px 18px rgba(0,0,0,0.3);
-      animation: pulseBtn 2s infinite;
     }
     .start-btn:hover {
       transform: scale(1.1);
@@ -93,26 +82,10 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.4);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes bounceIn {
-      0% { transform: scale(0.5); opacity: 0; }
-      60% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(1); }
-    }
-    @keyframes pulseBtn {
-      0%,100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    /* Analyzer Page */
     .analyzer-page {
       display: none;
       padding: 6rem 1rem 5rem;
       text-align: center;
-      animation: fadeIn 1s ease;
     }
     .upload-box {
       margin: 2rem auto;
@@ -124,9 +97,7 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-    .upload-box:hover {
-      background: #e8f5e9;
-    }
+    .upload-box:hover { background: #e8f5e9; }
     input[type="file"] {
       display: block;
       margin: 1rem auto;
@@ -190,12 +161,14 @@
 <body>
   <nav>AgriDrone Health Monitor</nav>
 
+  <!-- About Section -->
   <div class="about-page" id="about">
     <h1>AgriDrone Health Monitor</h1>
     <p>AI-powered crop health analyzer that detects plant diseases from leaf images, helping farmers take action early.</p>
     <button class="start-btn" onclick="showAnalyzer()">Start Analyzing Crops</button>
   </div>
 
+  <!-- Analyzer Section -->
   <div class="analyzer-page" id="analyzer">
     <h2>Upload Crop Images</h2>
     <div class="upload-box" onclick="document.getElementById('leafUpload').click()">
@@ -209,30 +182,73 @@
   <footer>AgriDrone Health Monitor | www.agridrone.africa</footer>
 
   <script>
+    const API_BASE = "https://your-backend-url.onrender.com"; 
+    // Replace this with your deployed backend URL later
+
     function showAnalyzer() {
       document.getElementById('about').style.display = 'none';
       document.getElementById('analyzer').style.display = 'block';
     }
 
-    function showDemoResults() {
+    document.getElementById('leafUpload').addEventListener('change', async function() {
+      const files = this.files;
+      if (!files.length) return;
+
       const resultsDiv = document.getElementById('results');
-      resultsDiv.classList.add('visible');
-      resultsDiv.innerHTML = `
-        <h3>Detected Diseases</h3>
-        <p><b>Leaf Blight</b> (90%)</p>
-        <div class="confidence-bar"><div class="bar-fill green" style="width:90%"></div></div>
-        <p><b>Rust Fungus</b> (60%)</p>
-        <div class="confidence-bar"><div class="bar-fill yellow" style="width:60%"></div></div>
+      const loadingDiv = document.getElementById('loading');
+      resultsDiv.innerHTML = '';
+      resultsDiv.classList.remove('visible');
+      loadingDiv.style.display = 'block';
+
+      const formData = new FormData();
+      let endpoint = '/analyze-single';
+      if (files.length === 1) {
+        formData.append('image', files[0]);
+      } else {
+        endpoint = '/analyze-batch';
+        for (let file of files) {
+          formData.append('images', file);
+        }
+      }
+
+      try {
+        const response = await fetch(API_BASE + endpoint, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        loadingDiv.style.display = 'none';
+        resultsDiv.classList.add('visible');
+
+        if (endpoint === '/analyze-single') {
+          displayResult(resultsDiv, data.disease_detected, data.confidence);
+        } else {
+          resultsDiv.innerHTML = `<h3>Detected Diseases</h3>`;
+          data.results.forEach(result => {
+            displayResult(resultsDiv, result.disease_detected, result.confidence);
+          });
+        }
+
+      } catch (err) {
+        loadingDiv.style.display = 'none';
+        resultsDiv.innerHTML = `<p style="color:red;">Error: Unable to analyze images</p>`;
+      }
+    });
+
+    function displayResult(container, disease, confidenceStr) {
+      const confidence = parseFloat(confidenceStr);
+      let barColor = 'green';
+      if (confidence < 70) barColor = 'yellow';
+      if (confidence < 40) barColor = 'red';
+
+      container.innerHTML += `
+        <p><b>${disease}</b> (${confidence.toFixed(1)}%)</p>
+        <div class="confidence-bar">
+          <div class="bar-fill ${barColor}" style="width:${confidence}%;"></div>
+        </div>
       `;
     }
-
-    document.getElementById('leafUpload').addEventListener('change', () => {
-      document.getElementById('loading').style.display = 'block';
-      setTimeout(() => {
-        document.getElementById('loading').style.display = 'none';
-        showDemoResults();
-      }, 2500);
-    });
   </script>
 </body>
-      </html>
+                                                                                                                         </html>
