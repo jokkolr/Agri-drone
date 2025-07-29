@@ -1,6 +1,16 @@
 from flask import Flask, request, jsonify
 import os
 
+# --- AI imports ---
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+import tensorflow_hub as hub
+
+# --- Load pre-trained AI model ---
+MODEL_URL = "https://tfhub.dev/google/imagenet/mobilenet_v2_140_224/classification/5"
+model = hub.load(MODEL_URL)
+
 app = Flask(__name__)
 
 # Create uploads folder if it doesn't exist
@@ -12,7 +22,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def home():
     return "AgriDrone Backend is running!"
 
-# Route for single image upload
+# Route for single image upload (AI analysis will be added soon)
 @app.route('/analyze-single', methods=['POST'])
 def analyze_single():
     if 'image' not in request.files:
@@ -24,7 +34,7 @@ def analyze_single():
     
     return jsonify({'message': 'Image received successfully', 'filename': image.filename})
 
-# Route for multiple image uploads
+# Route for multiple image uploads (AI analysis will be added soon)
 @app.route('/analyze-batch', methods=['POST'])
 def analyze_batch():
     if 'images' not in request.files:
