@@ -7,11 +7,16 @@ import numpy as np
 from PIL import Image
 import tensorflow_hub as hub
 
-# --- Load pre-trained AI model ---
-MODEL_URL = "https://tfhub.dev/google/imagenet/mobilenet_v2_140_224/classification/5"
-model = hub.load(MODEL_URL)
+# Initialize Flask app
+app = Flask(__name__)
 
-# Example mapping of some class IDs to plant diseases (simplified)
+# --- Pre-load AI model once (not every request) ---
+MODEL_URL = "https://tfhub.dev/google/imagenet/mobilenet_v2_140_224/classification/5"
+print("Loading AI model... this may take a moment")
+model = hub.load(MODEL_URL)
+print("Model loaded successfully!")
+
+# Map some class IDs to plant diseases (simple example)
 CLASS_LABELS = {
     0: "Healthy Leaf",
     1: "Powdery Mildew",
@@ -23,14 +28,12 @@ CLASS_LABELS = {
     7: "Mosaic Virus"
 }
 
-app = Flask(__name__)
-
-# Create uploads folder if it doesn't exist
+# Ensure uploads folder exists
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Function to preprocess image and get prediction
+# Function to preprocess and predict
 def predict_disease(image_path):
     img = Image.open(image_path).convert("RGB").resize((224, 224))
     img_array = np.array(img) / 255.0
@@ -45,9 +48,8 @@ def predict_disease(image_path):
 
 @app.route('/')
 def home():
-    return "AgriDrone Backend is running!"
+    return "AgriDrone Backend is running with AI!"
 
-# Route for single image analysis
 @app.route('/analyze-single', methods=['POST'])
 def analyze_single():
     if 'image' not in request.files:
@@ -66,7 +68,6 @@ def analyze_single():
         'confidence': f"{confidence:.2f}%"
     })
 
-# Route for multiple image analysis
 @app.route('/analyze-batch', methods=['POST'])
 def analyze_batch():
     if 'images' not in request.files:
@@ -80,19 +81,15 @@ def analyze_batch():
         img.save(filepath)
 
         disease_name, confidence = predict_disease(filepath)
-
         results.append({
             'filename': img.filename,
             'disease_detected': disease_name,
             'confidence': f"{confidence:.2f}%"
         })
 
-    return jsonify({
-        'message': 'Batch analyzed successfully',
-        'results': results
-    })
+    return jsonify({'message': 'Batch analyzed successfully', 'results': results})
 
 if __name__ == '__main__':
-    # Use the port Render assigns
+    # Use Render’s dynamic port
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
