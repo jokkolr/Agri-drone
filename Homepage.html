@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriDrone Health Monitor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background: #f4f4f4; color: #333; }
+
+    /* Navigation Bar */
+    nav {
+      background: #2e7d32;
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: bold;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+    }
+
+    /* Footer */
+    footer {
+      background: #2e7d32;
+      color: #fff;
+      text-align: center;
+      padding: 0.8rem;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      font-size: 0.9rem;
+    }
+
+    /* About Page */
+    .about-page {
+      height: 100vh;
+      background: url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?fit=crop&w=1200&q=80') no-repeat center center/cover;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: white;
+      padding: 2rem;
+    }
+    .about-page::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5); /* Dark overlay for readability */
+    }
+    .about-page h1, .about-page p, .start-btn {
+      position: relative;
+      z-index: 2;
+    }
+    .about-page h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 1px 1px 6px rgba(0,0,0,0.8);
+    }
+    .about-page p {
+      font-size: 1.2rem;
+      max-width: 90%;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+    .start-btn {
+      padding: 1rem 2rem;
+      background: #4caf50;
+      border: none;
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .start-btn:hover {
+      transform: scale(1.1);
+      background: #66bb6a;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+
+    /* Analyzer Page */
+    .analyzer-page {
+      display: none;
+      padding: 6rem 1rem 5rem;
+      text-align: center;
+    }
+    .upload-box {
+      margin: 2rem 0;
+    }
+    input[type="file"] {
+      display: block;
+      margin: 1rem auto;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 2px solid #4caf50;
+      border-radius: 8px;
+    }
+
+    /* Loading Animation */
+    .loading {
+      display: none;
+      margin-top: 1.5rem;
+      font-size: 1.3rem;
+      color: #4caf50;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 0.4; transform: scale(1); }
+    }
+
+    /* Results Section */
+    .results {
+      margin-top: 2rem;
+      text-align: left;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
+    .results h3 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #2e7d32;
+    }
+    .confidence-bar {
+      height: 18px;
+      background: #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 0.5rem 0 1rem;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 0;
+      transition: width 1.5s ease-in-out;
+    }
+    .bar-fill.green { background: #4caf50; }
+    .bar-fill.yellow { background: #ffeb3b; }
+    .bar-fill.red { background: #f44336; }
+  </style>
+</head>
+<body>
+  <nav>AgriDrone Health Monitor</nav>
+
+  <!-- About Page -->
+  <div class="about-page" id="about">
+    <h1>AgriDrone Health Monitor</h1>
+    <p>AI-powered crop health analyzer that detects plant diseases from leaf images, helping farmers take action early.</p>
+    <button class="start-btn" onclick="showAnalyzer()">Start Analyzing Crops</button>
+  </div>
+
+  <!-- Analyzer Page -->
+  <div class="analyzer-page" id="analyzer">
+    <h2>Analyze Your Crop</h2>
+    <div class="upload-box">
+      <input type="file" id="leafUpload" accept="image/*">
+    </div>
+    <div class="loading" id="loading">🌱 Scanning your crops…</div>
+    <div class="results" id="results"></div>
+  </div>
+
+  <footer>AgriDrone Health Monitor | www.agridrone.africa</footer>
+
+  <script>
+    function showAnalyzer() {
+      document.getElementById('about').style.display = 'none';
+      document.getElementById('analyzer').style.display = 'block';
+    }
+
+    // Demo confidence bars (for now, until backend connects)
+    function showDemoResults() {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = `
+        <h3>Detected Diseases</h3>
+        <p><b>Leaf Blight</b> (90%)</p>
+        <div class="confidence-bar"><div class="bar-fill green" style="width:90%"></div></div>
+        <p><b>Rust Fungus</b> (60%)</p>
+        <div class="confidence-bar"><div class="bar-fill yellow" style="width:60%"></div></div>
+      `;
+    }
+
+    // Simulate analysis for now
+    document.getElementById('leafUpload').addEventListener('change', () => {
+      document.getElementById('loading').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        showDemoResults();
+      }, 2500);
+    });
+  </script>
+</body>
+</html>
