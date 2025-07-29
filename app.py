@@ -1,54 +1,26 @@
 from flask import Flask, request, jsonify
 import os
+import requests
 
-# --- AI imports ---
-import tensorflow as tf
-import numpy as np
-from PIL import Image
-import tensorflow_hub as hub
-
-# Initialize Flask app
 app = Flask(__name__)
 
-# --- Pre-load AI model once (not every request) ---
-MODEL_URL = "https://tfhub.dev/google/imagenet/mobilenet_v2_140_224/classification/5"
-print("Loading AI model... this may take a moment")
-model = hub.load(MODEL_URL)
-print("Model loaded successfully!")
-
-# Map some class IDs to plant diseases (simple example)
-CLASS_LABELS = {
-    0: "Healthy Leaf",
-    1: "Powdery Mildew",
-    2: "Leaf Blight",
-    3: "Rust Fungus",
-    4: "Bacterial Spot",
-    5: "Early Blight",
-    6: "Late Blight",
-    7: "Mosaic Virus"
-}
-
-# Ensure uploads folder exists
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Function to preprocess and predict
-def predict_disease(image_path):
-    img = Image.open(image_path).convert("RGB").resize((224, 224))
-    img_array = np.array(img) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
+# Hugging Face Inference API (plant disease model)
+HF_API_URL = "https://api-inference.huggingface.co/models/nateraw/plant-disease-model"
+HF_API_KEY = os.environ.get("HF_API_KEY")  # Set this in Render Environment Variables
 
-    predictions = model(img_array)
-    predicted_class = np.argmax(predictions)
-    confidence = float(np.max(predictions)) * 100
-    disease_name = CLASS_LABELS.get(predicted_class, f"Class {predicted_class}")
-
-    return disease_name, confidence
+def query_huggingface(image_path):
+    with open(image_path, "rb") as f:
+        headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+        response = requests.post(HF_API_URL, headers=headers, files={"file": f})
+    return response.json()
 
 @app.route('/')
 def home():
-    return "AgriDrone Backend is running with AI!"
+    return "AgriDrone Backend is live with Hugging Face AI!"
 
 @app.route('/analyze-single', methods=['POST'])
 def analyze_single():
@@ -59,37 +31,14 @@ def analyze_single():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
     image.save(filepath)
 
-    disease_name, confidence = predict_disease(filepath)
+    results = query_huggingface(filepath)
 
     return jsonify({
-        'message': 'Image analyzed successfully',
+        'message': 'AI analysis complete',
         'filename': image.filename,
-        'disease_detected': disease_name,
-        'confidence': f"{confidence:.2f}%"
+        'results': results
     })
 
-@app.route('/analyze-batch', methods=['POST'])
-def analyze_batch():
-    if 'images' not in request.files:
-        return jsonify({'error': 'No images uploaded'}), 400
-
-    images = request.files.getlist('images')
-    results = []
-
-    for img in images:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], img.filename)
-        img.save(filepath)
-
-        disease_name, confidence = predict_disease(filepath)
-        results.append({
-            'filename': img.filename,
-            'disease_detected': disease_name,
-            'confidence': f"{confidence:.2f}%"
-        })
-
-    return jsonify({'message': 'Batch analyzed successfully', 'results': results})
-
 if __name__ == '__main__':
-    # Use Render’s dynamic port
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
