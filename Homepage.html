@@ -8,23 +8,27 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background: #f4f4f4; color: #333; }
 
-    /* Navigation Bar */
     nav {
-      background: #2e7d32;
+      background: linear-gradient(90deg, #2e7d32, #4caf50);
       color: #fff;
       padding: 1rem;
       text-align: center;
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       font-weight: bold;
       position: fixed;
       width: 100%;
       top: 0;
       left: 0;
       z-index: 1000;
-      box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.25);
+      animation: slideDown 1s ease;
     }
 
-    /* Footer */
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+
     footer {
       background: #2e7d32;
       color: #fff;
@@ -40,7 +44,6 @@
     .about-page {
       height: 100vh;
       background: url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?fit=crop&w=1200&q=80') no-repeat center center/cover;
-      position: relative;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -48,44 +51,60 @@
       text-align: center;
       color: white;
       padding: 2rem;
+      animation: fadeIn 2s ease;
+      position: relative;
     }
     .about-page::before {
       content: "";
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); /* Dark overlay for readability */
+      background: rgba(0, 0, 0, 0.5);
     }
-    .about-page h1, .about-page p, .start-btn {
-      position: relative;
-      z-index: 2;
-    }
+    .about-page h1, .about-page p, .start-btn { position: relative; z-index: 2; }
     .about-page h1 {
-      font-size: 2.5rem;
+      font-size: 3rem;
       margin-bottom: 1rem;
-      text-shadow: 1px 1px 6px rgba(0,0,0,0.8);
+      text-shadow: 1px 1px 8px rgba(0,0,0,0.9);
+      animation: bounceIn 1.5s ease;
     }
     .about-page p {
-      font-size: 1.2rem;
-      max-width: 90%;
+      font-size: 1.3rem;
+      max-width: 85%;
       margin-bottom: 2rem;
       line-height: 1.5;
+      animation: fadeIn 3s ease;
     }
     .start-btn {
-      padding: 1rem 2rem;
+      padding: 1rem 2.5rem;
       background: #4caf50;
       border: none;
       color: #fff;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       font-weight: bold;
-      border-radius: 30px;
+      border-radius: 50px;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 5px 18px rgba(0,0,0,0.3);
+      animation: pulseBtn 2s infinite;
     }
     .start-btn:hover {
       transform: scale(1.1);
       background: #66bb6a;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      60% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+    @keyframes pulseBtn {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
 
     /* Analyzer Page */
@@ -93,24 +112,32 @@
       display: none;
       padding: 6rem 1rem 5rem;
       text-align: center;
+      animation: fadeIn 1s ease;
     }
     .upload-box {
-      margin: 2rem 0;
+      margin: 2rem auto;
+      border: 2px dashed #4caf50;
+      padding: 2rem;
+      max-width: 500px;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .upload-box:hover {
+      background: #e8f5e9;
     }
     input[type="file"] {
       display: block;
       margin: 1rem auto;
-      padding: 0.5rem;
       font-size: 1rem;
-      border: 2px solid #4caf50;
-      border-radius: 8px;
+      text-align: center;
     }
 
-    /* Loading Animation */
     .loading {
       display: none;
       margin-top: 1.5rem;
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       color: #4caf50;
       animation: pulse 1.5s infinite;
     }
@@ -120,7 +147,6 @@
       100% { opacity: 0.4; transform: scale(1); }
     }
 
-    /* Results Section */
     .results {
       margin-top: 2rem;
       text-align: left;
@@ -129,8 +155,15 @@
       margin-right: auto;
       background: #fff;
       border-radius: 10px;
-      box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
       padding: 1rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.8s ease;
+    }
+    .results.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
     .results h3 {
       text-align: center;
@@ -157,18 +190,17 @@
 <body>
   <nav>AgriDrone Health Monitor</nav>
 
-  <!-- About Page -->
   <div class="about-page" id="about">
     <h1>AgriDrone Health Monitor</h1>
     <p>AI-powered crop health analyzer that detects plant diseases from leaf images, helping farmers take action early.</p>
     <button class="start-btn" onclick="showAnalyzer()">Start Analyzing Crops</button>
   </div>
 
-  <!-- Analyzer Page -->
   <div class="analyzer-page" id="analyzer">
-    <h2>Analyze Your Crop</h2>
-    <div class="upload-box">
-      <input type="file" id="leafUpload" accept="image/*">
+    <h2>Upload Crop Images</h2>
+    <div class="upload-box" onclick="document.getElementById('leafUpload').click()">
+      <p>Click or drag multiple images here</p>
+      <input type="file" id="leafUpload" accept="image/*" multiple>
     </div>
     <div class="loading" id="loading">🌱 Scanning your crops…</div>
     <div class="results" id="results"></div>
@@ -182,9 +214,9 @@
       document.getElementById('analyzer').style.display = 'block';
     }
 
-    // Demo confidence bars (for now, until backend connects)
     function showDemoResults() {
       const resultsDiv = document.getElementById('results');
+      resultsDiv.classList.add('visible');
       resultsDiv.innerHTML = `
         <h3>Detected Diseases</h3>
         <p><b>Leaf Blight</b> (90%)</p>
@@ -194,7 +226,6 @@
       `;
     }
 
-    // Simulate analysis for now
     document.getElementById('leafUpload').addEventListener('change', () => {
       document.getElementById('loading').style.display = 'block';
       setTimeout(() => {
@@ -204,4 +235,4 @@
     });
   </script>
 </body>
-</html>
+      </html>
