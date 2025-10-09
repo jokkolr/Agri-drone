@@ -1,64 +1,33 @@
-import fs from "fs";
-import fetch from "node-fetch";
+import express from "express";
 import multer from "multer";
-import nextConnect from "next-connect";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 
-const upload = multer({ dest: "/tmp" });
+dotenv.config();
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 
-const handler = nextConnect();
-handler.use(upload.single("image"));
+const HF_TOKEN = process.env.HUGGINGFACE_TOKEN;
 
-const HF_API_URL = "https://api-inference.huggingface.co/models/akhaliq/plant-disease-detection-v1";
-
-handler.post(async (req, res) => {
+app.post("/analyze-single", upload.single("image"), async (req, res) => {
   try {
-    const image = fs.readFileSync(req.file.path);
-    const response = await fetch(HF_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.HF_API_KEY}`,
-        "Content-Type": "application/octet-stream",
-      },
-      body: image,
-    });
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/plant-disease-classification",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${HF_TOKEN}` },
+        body: req.file.buffer,
+      }
+    );
 
     const result = await response.json();
-    const prediction = result[0];
-    const disease = prediction.label;
-    const confidence = (prediction.score * 100).toFixed(2);
-
-    const treatments = {
-      "Tomato___Late_blight": {
-        solution: "Use copper-based fungicides and remove infected leaves.",
-        shop: "Agrovet Kenya, Nairobi",
-      },
-      "Apple___Black_rot": {
-        solution: "Apply Mancozeb and prune affected branches.",
-        shop: "FarmChem Supplies, Nakuru",
-      },
-    };
-
-    const advice = treatments[disease] || {
-      solution: "Consult an agricultural expert.",
-      shop: "Nearest Agrovet",
-    };
-
-    res.status(200).json({
-      disease_detected: disease,
-      confidence,
-      treatment: advice.solution,
-      shop: advice.shop,
+    res.json({
+      disease_detected: result[0]?.label || "Unknown disease",
+      confidence: result[0]?.score ? (result[0].score * 100).toFixed(1) : 0,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Image analysis failed" });
+    res.status(500).json({ error: "Failed to analyze image" });
   }
 });
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default handler;
+app.listen(3000, () => console.log("Server running on port 3000"));
