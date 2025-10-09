@@ -1,0 +1,10 @@
+{
+  "name": "agridrone",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "multer": "^1.4.5-lts.1",
+    "next-connect": "^0.12.2",
+    "node-fetch": "^3.3.2"
+  }
+}
